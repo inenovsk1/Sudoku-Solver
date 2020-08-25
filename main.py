@@ -33,7 +33,7 @@ class Cell():
             self._solution = number
             self._color = Color.Solved
         else:
-            self._solution = float("inf")
+            self._solution = 0
             self._color = Color.Unsolved
 
     @property
@@ -52,16 +52,26 @@ class Cell():
     def color(self, new_color):
         self._color = new_color
 
+    def __str__(self):
+        return str(self._solution) if self._solution else ""
+
 
 class SudokuGame():
     """Class that implements the logic of solving Sudoku by using
     the Backtracking algorithm
     """
-    #TODO: Implement the SudokuGame class
     def __init__(self, path, cell_width, cell_height):
-        self._grid = self.init_grid(path)
         self._cell_width = cell_width
         self._cell_height = cell_height
+        self._grid = self.init_grid(path)
+
+    @property
+    def grid(self):
+        return self._grid
+
+    @grid.setter
+    def grid(self, new_grid):
+        self._grid = new_grid
 
     def init_grid(self, path):
         """Initialize a grid from a JSON file
@@ -77,10 +87,17 @@ class SudokuGame():
         with open(path) as f:
             board_data = json.load(f)
 
-        for row in range(9):
+        for row in range(len(board_data["board"])):
             grid.append(list())
+            col_checker = 0
+
             for col, number in enumerate(board_data["board"]["row" + str(row + 1)]):
                 grid[row].append(Cell(row, col, self._cell_width, self._cell_height, number))
+                col_checker += 1
+
+            if col_checker != len(board_data["board"]):
+                print("Number of rows does not match number of columns. Please verify your Sudoku board at {path}".format(path=path))
+                sys.exit(1)
 
         return grid
 
@@ -116,6 +133,30 @@ def draw_grid_borders(screen, rows, cols, width, height):
     return updated_points
 
 
+def refresh_screen(screen, game, game_font):
+    """Function that redraws the screen at each iteration of the main event loop
+
+    Args:
+        screen (pygame.display): Surface to redraw the game on
+        game (SudokuGame): Class representing a single instance of a Sudoku game
+        game_font (pygame.freetype.Font): The font to use when rendering numbers in the Sudoku game
+    """
+    screen.fill(Color.Background.value)
+
+    mid_point = 30
+    updated_points = list()
+    
+    for row in range(9):
+        for col in range(9):
+            text_surface, rect = game_font.render(str(game.grid[row][col]), Color.Text.value)
+            rect = screen.blit(text_surface, pygame.Rect(row*90 + mid_point, col*90 + mid_point, 90, 90))
+            updated_points.append(rect)
+
+    updated_points += draw_grid_borders(screen, 9, 9, 90, 90)
+
+    pygame.display.update(updated_points)
+
+
 def main():
     pygame.init()
     screen = pygame.display.set_mode((810, 810))
@@ -123,28 +164,16 @@ def main():
 
     font_size = 48
     game_font = pygame.freetype.Font("./fonts/Fira Code Bold Nerd Font Complete.ttf", font_size)
-    
-    # The mid point of a single cell = (810 / 9) / 2. Use this to center the text when drawing
-    mid_point = 30
+
+    game = SudokuGame("./boards/game1.json", 90, 90)
 
     while True:
-        screen.fill(Color.Background.value)
-        
-        for i in range(9):
-            text_surface, rect = game_font.render(str(i + 1), Color.Text.value)
-            screen.blit(text_surface, pygame.Rect(i * 90 + mid_point, 0 + mid_point, 90, 90))
-            for k in range(1, 9):
-                text_surface, rect = game_font.render(str(i + 1), Color.Text.value)
-                screen.blit(text_surface, pygame.Rect(i*90 + mid_point, k*90 + mid_point, 90, 90))
-
-        draw_grid_borders(screen, 9, 9, 90, 90)
+        refresh_screen(screen, game, game_font)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit(0)
-
-        pygame.display.update()
 
 
 if __name__ == "__main__":
