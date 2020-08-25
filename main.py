@@ -42,7 +42,7 @@ class Cell():
 
     @solution.setter
     def solution(self, num):
-        self,_solution = num
+        self._solution = num
 
     @property
     def color(self):
@@ -100,6 +100,83 @@ class SudokuGame():
                 sys.exit(1)
 
         return grid
+
+    def find_empty_position(self):
+        """Find if a position in a given row/col is empty and return it
+
+        Returns:
+            tuple: row and col of an empty position or -1, -1 if no such position exists
+            as well as True or False whether a number has been assigned to that position or not
+        """
+        empty_row = -1
+        empty_col = -1
+
+        for row in range(9):
+            for col in range(9):
+                if self._grid[row][col].solution == 0:
+                    empty_row = row
+                    empty_col = col
+                    return empty_row, empty_col, False
+
+        return empty_row, empty_col, True
+
+    def move_is_safe(self, suggestion, row, col):
+        """Check whether the suggestion move for the given row and col is safe to play
+        by checking for the existence in the current row, current column, and current sub matrix
+
+        Args:
+            suggestion (int): The suggestion move to play
+            row (int): Current row at which to place the suggestion
+            col (int): Current col at which to place the suggestion
+
+        Returns:
+            bool: True whether a move with the current suggestion would be valid or not based on
+                  the current state of the sudoky board
+        """
+        # Check current row
+        for index in range(9):
+            if self._grid[row][index].solution == suggestion:
+                return False
+
+        # Check current col
+        for index in range(9):
+            if self._grid[index][col].solution == suggestion:
+                return False
+
+        # Check current submatrix
+        submat_row = (row // 3) * 3
+        submat_col = (col // 3) * 3
+        for sub_row in range(submat_row, submat_row + 3):
+            for sub_col in range(submat_col, submat_col + 3):
+                if self._grid[sub_row][sub_col].solution == suggestion:
+                    return False
+
+        return True
+
+    def solve_game(self):
+        """Function that solved the sudoku board by using Backtracking
+
+        Returns:
+            Bool: True if the board can be solved, False otherwise
+        """
+        row, col, assigned = self.find_empty_position()
+
+        if assigned:
+            return True
+
+        # Check for a valid solution between 1 and 9
+        for suggestion in range(1, 10):
+            if self.move_is_safe(suggestion, row, col):
+                self._grid[row][col].solution = suggestion
+
+                # Continue with solution
+                if self.solve_game():
+                    return True
+
+                # Backtrack
+                self._grid[row][col].solution = 0
+
+        return False
 
 
 def draw_grid_borders(screen, rows, cols, width, height):
@@ -174,6 +251,9 @@ def main():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit(0)
+
+        # Sleep for x milliseconds to release the CPU to other processes
+        pygame.time.wait(10)
 
 
 if __name__ == "__main__":
