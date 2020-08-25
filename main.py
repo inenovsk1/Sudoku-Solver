@@ -11,11 +11,9 @@ import pygame.freetype
 
 class Color(enum.Enum):
     Background = (38, 49, 50)
-    Foreground = (237, 238, 237)
     Text = (255, 255, 255)
     CurrentlySolving = (255, 81, 81)
     Solved = (105, 240, 173)
-    Unsolved = Background
     Grid = (96, 124, 139)
 
 
@@ -26,8 +24,8 @@ class Cell():
     def __init__(self, row, col, width, height, number):
         self._row = row
         self._col = col
-        self._xpos = row * width
-        self._ypos = col * height
+        self._xpos = col * width
+        self._ypos = row * height
         self._color = Color.Background
 
         if number:
@@ -271,7 +269,7 @@ def refresh_screen(screen, game, game_font):
                 updated_points.append(rect_dims)
             
             text_surface, rect = game_font.render(str(game.grid[row][col]), Color.Text.value)
-            rect = screen.blit(text_surface, pygame.Rect(row*90 + mid_point, col*90 + mid_point, 90, 90))
+            rect = screen.blit(text_surface, pygame.Rect(col*90 + mid_point, row*90 + mid_point, 90, 90))
             updated_points.append(rect)
 
     updated_points += draw_grid_borders(screen, 9, 9, 90, 90)
