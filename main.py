@@ -28,13 +28,28 @@ class Cell():
         self._col = col
         self._xpos = row * width
         self._ypos = col * height
+        self._color = Color.Background
 
         if number:
             self._solution = number
-            self._color = Color.Solved
         else:
             self._solution = 0
-            self._color = Color.Unsolved
+
+    @property
+    def xpos(self):
+        return self._xpos
+
+    @xpos.setter
+    def xpos(self, new_xpos):
+        self._xpos = new_xpos
+
+    @property
+    def ypos(self):
+        return self._ypos
+
+    @ypos.setter
+    def ypos(self, new_ypos):
+        self._ypos = new_ypos
 
     @property
     def solution(self):
@@ -60,7 +75,9 @@ class SudokuGame():
     """Class that implements the logic of solving Sudoku by using
     the Backtracking algorithm
     """
-    def __init__(self, path, cell_width, cell_height):
+    def __init__(self, screen, game_font, cell_width, cell_height, path):
+        self._screen = screen
+        self._game_font = game_font
         self._cell_width = cell_width
         self._cell_height = cell_height
         self._grid = self.init_grid(path)
@@ -136,11 +153,13 @@ class SudokuGame():
         # Check current row
         for index in range(9):
             if self._grid[row][index].solution == suggestion:
+                self._grid[row][col].color = Color.Background
                 return False
 
         # Check current col
         for index in range(9):
             if self._grid[index][col].solution == suggestion:
+                self._grid[row][col].color = Color.Background
                 return False
 
         # Check current submatrix
@@ -149,6 +168,7 @@ class SudokuGame():
         for sub_row in range(submat_row, submat_row + 3):
             for sub_col in range(submat_col, submat_col + 3):
                 if self._grid[sub_row][sub_col].solution == suggestion:
+                    self._grid[row][col].color = Color.Background
                     return False
 
         return True
@@ -159,15 +179,30 @@ class SudokuGame():
         Returns:
             Bool: True if the board can be solved, False otherwise
         """
+        # Handle exiting while algo is running
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit(0)
+        
         row, col, assigned = self.find_empty_position()
 
         if assigned:
             return True
 
+        # Currently checking this row and col
+        self._grid[row][col].color = Color.CurrentlySolving
+        refresh_screen(self._screen, self, self._game_font)
+        pygame.time.wait(50)
+
         # Check for a valid solution between 1 and 9
         for suggestion in range(1, 10):
             if self.move_is_safe(suggestion, row, col):
+                # Possible Solution
                 self._grid[row][col].solution = suggestion
+                self._grid[row][col].color = Color.Solved
+                refresh_screen(self._screen, self, self._game_font)
+                pygame.time.wait(50)
 
                 # Continue with solution
                 if self.solve_game():
@@ -175,6 +210,9 @@ class SudokuGame():
 
                 # Backtrack
                 self._grid[row][col].solution = 0
+                self._grid[row][col].color = Color.Background
+                refresh_screen(self._screen, self, self._game_font)
+                pygame.time.wait(50)
 
         return False
 
@@ -225,6 +263,13 @@ def refresh_screen(screen, game, game_font):
     
     for row in range(9):
         for col in range(9):
+            if game.grid[row][col].color != Color.Background:
+                color = game.grid[row][col].color
+                x = game.grid[row][col].xpos
+                y = game.grid[row][col].ypos
+                rect_dims = pygame.draw.rect(screen, color.value, (x, y, 90, 90))
+                updated_points.append(rect_dims)
+            
             text_surface, rect = game_font.render(str(game.grid[row][col]), Color.Text.value)
             rect = screen.blit(text_surface, pygame.Rect(row*90 + mid_point, col*90 + mid_point, 90, 90))
             updated_points.append(rect)
@@ -242,15 +287,26 @@ def main():
     font_size = 48
     game_font = pygame.freetype.Font("./fonts/Fira Code Bold Nerd Font Complete.ttf", font_size)
 
-    game = SudokuGame("./boards/game1.json", 90, 90)
+    sudoku = SudokuGame(screen, game_font, 90, 90, "./boards/game1.json")
 
     while True:
-        refresh_screen(screen, game, game_font)
+        refresh_screen(screen, sudoku, game_font)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit(0)
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    sudoku.solve_game()
+
+                if event.key == pygame.K_TAB:
+                    sudoku = SudokuGame(screen, game_font, 90, 90, "./boards/game1.json")
+
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
 
         # Sleep for x milliseconds to release the CPU to other processes
         pygame.time.wait(10)
