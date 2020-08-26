@@ -2,6 +2,7 @@
 """Sudoku Solver using Pygame and the backtracking algorithm
 """
 
+import os
 import sys
 import enum
 import json
@@ -293,7 +294,7 @@ def main():
     
     args = parser.parse_args()
     
-    path = args.path
+    path = os.path.abspath(os.path.expanduser(args.path))
     fast = args.fast
 
     pygame.init()
