@@ -5,6 +5,7 @@
 import sys
 import enum
 import json
+import argparse
 import pygame
 import pygame.freetype
 
@@ -73,9 +74,10 @@ class SudokuGame():
     """Class that implements the logic of solving Sudoku by using
     the Backtracking algorithm
     """
-    def __init__(self, screen, game_font, cell_width, cell_height, path):
+    def __init__(self, screen, game_font, path, fast,  cell_width, cell_height):
         self._screen = screen
         self._game_font = game_font
+        self._fast = fast
         self._cell_width = cell_width
         self._cell_height = cell_height
         self._grid = self.init_grid(path)
@@ -191,7 +193,8 @@ class SudokuGame():
         # Currently checking this row and col
         self._grid[row][col].color = Color.CurrentlySolving
         refresh_screen(self._screen, self, self._game_font)
-        pygame.time.wait(50)
+        if not self._fast:
+            pygame.time.wait(50)
 
         # Check for a valid solution between 1 and 9
         for suggestion in range(1, 10):
@@ -200,7 +203,8 @@ class SudokuGame():
                 self._grid[row][col].solution = suggestion
                 self._grid[row][col].color = Color.Solved
                 refresh_screen(self._screen, self, self._game_font)
-                pygame.time.wait(50)
+                if not self._fast:
+                    pygame.time.wait(50)
 
                 # Continue with solution
                 if self.solve_game():
@@ -210,7 +214,8 @@ class SudokuGame():
                 self._grid[row][col].solution = 0
                 self._grid[row][col].color = Color.Background
                 refresh_screen(self._screen, self, self._game_font)
-                pygame.time.wait(50)
+                if not self._fast:
+                    pygame.time.wait(50)
 
         return False
 
@@ -278,6 +283,19 @@ def refresh_screen(screen, game, game_font):
 
 
 def main():
+    parser = argparse.ArgumentParser(description="""Sudoku Solver using the Backtracking algorithm and pygame for visualizations.
+    Usage instructions:
+    1. Press space to initialize the algorithm.
+    2. Press TAB to reset the board from the beginning.""", formatter_class=argparse.RawTextHelpFormatter)
+    
+    parser.add_argument('-p', '--path', dest='path', required=True, help='Path to a JSON file with a board to be solved')
+    parser.add_argument('-f', '--fast', action='store_true', dest='fast', help='Whether to speed up animations or run slower')
+    
+    args = parser.parse_args()
+    
+    path = args.path
+    fast = args.fast
+
     pygame.init()
     screen = pygame.display.set_mode((810, 810))
     pygame.display.set_caption("Sudoku Backtracking Solver")
@@ -285,7 +303,7 @@ def main():
     font_size = 48
     game_font = pygame.freetype.Font("./fonts/Fira Code Bold Nerd Font Complete.ttf", font_size)
 
-    sudoku = SudokuGame(screen, game_font, 90, 90, "./boards/game1.json")
+    sudoku = SudokuGame(screen, game_font, path, fast, 90, 90)
 
     while True:
         refresh_screen(screen, sudoku, game_font)
@@ -300,7 +318,7 @@ def main():
                     sudoku.solve_game()
 
                 if event.key == pygame.K_TAB:
-                    sudoku = SudokuGame(screen, game_font, 90, 90, "./boards/game1.json")
+                    sudoku = SudokuGame(screen, game_font, path, fast, 90, 90)
 
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit()
