@@ -32,12 +32,12 @@ To exit press either ESCAPE or the corresponding key combination to close apps o
 One can also supply their own board and run the solver on it. To do it one needs to supply a json file in the following format:
 ```json
 {
-    "board" {
-        "row1": [number1,number2,number3,number4,number5,number6,number7,number8,number9],
-        "row2": [number1,number2,number3,number4,number5,number6,number7,number8,number9],
+    "board": {
+        "row1": [1, 2, 3, 4, 0, 0, 7, 8, 9],
+        "row2": [1, 2, 3, 4, 5, 6, 7, 0, 0],
         ...
-        "row9": [number1,number2,number3,number4,number5,number6,number7,number8,number9]
+        "row9": [1, 2, 0, 4, 5, 6, 7, 8, 9]
     }
 }
 ```
-There's a global "board" key, which contains keys named "row[1-9]" each representing a list of all 9 numbers in the given row.
+There's a global "board" key, which contains keys named "row[1-9]" each representing a list of all 9 numbers in the given row. When the number is 0, that means the position is empty. When a number is between 1 and 9 that means a position already given on the Sudoku board.
