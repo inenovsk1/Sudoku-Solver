@@ -19,7 +19,7 @@ class Color(enum.Enum):
     Grid = (96, 124, 139)
 
 
-class Cell():
+class Cell:
     """Implementation of a single Sudoku cell. Use this class to keep track
     of a cell's color, coordinate positions, and current solution
     """
@@ -71,7 +71,7 @@ class Cell():
         return str(self._solution) if self._solution else ""
 
 
-class SudokuGame():
+class SudokuGame:
     """Class that implements the logic of solving Sudoku by using
     the Backtracking algorithm
     """
